@@ -1,0 +1,71 @@
+-- Configurações
+local distânciaMáxima = 9999999999999999999 -- Define a distância máxima para mostrar o ESP
+
+-- Função para criar o ESP
+local function criarESP(jogador)
+    -- Cria uma caixa para o corpo do jogador
+    local caixa = Instance.new("BoxHandleAdornment")
+    caixa.Size = jogador.Character:GetExtentsSize()
+    caixa.Color3 = Color3.new(1, 0, 0) -- Cor da caixa (vermelho)
+    caixa.Transparency = 0.5
+    caixa.AlwaysOnTop = true
+    caixa.ZIndex = 1
+    caixa.Adornee = jogador.Character
+
+    -- Cria o nome acima do jogador
+    local nome = Instance.new("TextLabel")
+    nome.Text = jogador.Name
+    nome.TextColor3 = Color3.new(1, 1, 1) -- Cor do texto (branco)
+    nome.BackgroundTransparency = 1
+    nome.Size = UDim2.new(0, 100, 0, 20)
+    nome.Position = UDim2.new(0, -50, 0, -30)
+    nome.Font = Enum.Font.SourceSansBold
+    nome.TextSize = 14
+    nome.TextStrokeColor3 = Color3.new(0, 0, 0)
+    nome.TextStrokeTransparency = 0.5
+    nome.ZIndex = 2
+    nome.Parent = jogador.Character.Head
+
+    -- Atualiza o ESP e o nome
+    local function atualizarESP()
+        if jogador.Character and jogador.Character:FindFirstChild("Head") then
+            local distância = (jogador.Character.Head.Position - game.Players.LocalPlayer.Character.Head.Position).magnitude
+            if distância <= distânciaMáxima then
+                caixa.Adornee = jogador.Character
+                nome.Parent = jogador.Character.Head
+                caixa.Visible = true
+                nome.Visible = true
+                nome.Text = jogador.Name .. " (" .. math.floor(distância) .. " studs)"
+            else
+                caixa.Visible = false
+                nome.Visible = false
+            end
+        else
+            caixa.Visible = false
+            nome.Visible = false
+        end
+    end
+
+    -- Conecta a função ao evento de mudança de personagem
+    jogador.CharacterAdded:Connect(function()
+        wait(1)
+        atualizarESP()
+    end)
+
+    -- Chama a função para exibir o ESP inicialmente
+    atualizarESP()
+end
+
+-- Loop para criar o ESP para todos os jogadores já existentes
+for _, jogador in ipairs(game.Players:GetPlayers()) do
+    if jogador ~= game.Players.LocalPlayer then
+        criarESP(jogador)
+    end
+end
+
+-- Conecta a função para criar o ESP a cada novo jogador que entra no jogo
+game.Players.PlayerAdded:Connect(function(jogador)
+    if jogador ~= game.Players.LocalPlayer then
+        criarESP(jogador)
+    end
+end)
