@@ -1,65 +1,50 @@
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local Camera = workspace.CurrentCamera
-local ScreenGui = Instance.new("ScreenGui")
-local Folder = Instance.new("Folder")
-local Line = Instance.new("Frame")
+local espEnabled = true -- Define se o ESP está ativado ou desativado
+local boxThickness = 0.1 -- Define a espessura da caixa
+local boxColor = Color3.fromRGB(255, 0, 0) -- Define a cor da caixa (RGB)
 
-ScreenGui.Name = "ESP"
-ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+local function createESP(player)
+    -- Cria uma nova caixa
+    local box = Instance.new("BoxHandleAdornment")
+    box.Size = player.Character:WaitForChild("HumanoidRootPart").Size + Vector3.new(0.1, 0.1, 0.1)
+    box.Color3 = boxColor
+    box.Transparency = 0.5
+    box.AlwaysOnTop = true
+    box.ZIndex = 5
+    box.Adornee = player.Character:WaitForChild("HumanoidRootPart")
+    box.Parent = player.Character:WaitForChild("HumanoidRootPart")
 
-Folder.Name = "Players"
-Folder.Parent = ScreenGui
+    player.Character.HumanoidRootPart:GetPropertyChangedSignal("Position"):Connect(function()
+        box.Size = player.Character.HumanoidRootPart.Size + Vector3.new(0.1, 0.1, 0.1)
+        box.Adornee = player.Character.HumanoidRootPart
+    end)
+end
 
-Line.BackgroundColor3 = Color3.new(1, 1, 1)
-Line.BorderSizePixel = 0
-Line.Size = UDim2.new(0, 3, 0, 20)
-
-local function CreateESP(player)
-    local TextBox = Instance.new("TextBox")
-    TextBox.Name = player.Name
-    TextBox.BackgroundTransparency = 1
-    TextBox.Position = UDim2.new(0, 0, 0, -20)
-    TextBox.Size = UDim2.new(0, 200, 0, 20)
-    TextBox.Font = Enum.Font.SourceSansBold
-    TextBox.FontSize = Enum.FontSize.Size14
-    TextBox.TextColor3 = Color3.new(1, 1, 1)
-    TextBox.TextStrokeColor3 = Color3.new(0, 0, 0)
-    TextBox.TextStrokeTransparency = 0
-    TextBox.TextXAlignment = Enum.TextXAlignment.Center
-    TextBox.Text = player.Name
-    TextBox.Parent = Folder
-
-    local LineClone = Line:Clone()
-    LineClone.Parent = TextBox
-
-    local function Update()
-        local Position, Visible = Camera:WorldToViewportPoint(player.Character.HumanoidRootPart.Position)
-        TextBox.Visible = Visible
-
-        if Visible then
-            TextBox.Position = UDim2.new(0, Position.X, 0, Position.Y)
+local function removeESP(player)
+    local character = player.Character
+    if character then
+        local rootPart = character:FindFirstChild("HumanoidRootPart")
+        if rootPart then
+            for _, child in ipairs(rootPart:GetChildren()) do
+                if child:IsA("BoxHandleAdornment") then
+                    child:Destroy()
+                end
+            end
         end
     end
-
-    game:GetService("RunService").RenderStepped:Connect(Update)
 end
 
-for _, player in ipairs(Players:GetPlayers()) do
-    if player ~= LocalPlayer then
-        CreateESP(player)
-    end
+local function onPlayerAdded(player)
+    createESP(player)
+
+    player.CharacterAdded:Connect(function(character)
+        createESP(player)
+    end)
 end
 
-Players.PlayerAdded:Connect(function(player)
-    if player ~= LocalPlayer then
-        CreateESP(player)
-    end
-end)
+for _, player in ipairs(game.Players:GetPlayers()) do
+    onPlayerAdded(player)
+end
 
-Players.PlayerRemoving:Connect(function(player)
-    local TextBox = Folder:FindFirstChild(player.Name)
-    if TextBox then
-        TextBox:Destroy()
-    end
-end)
+game.Players.PlayerAdded:Connect(onPlayerAdded)
+
+game.Players.PlayerRemoving:Connect(removeESP)
