@@ -1,0 +1,65 @@
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+local ScreenGui = Instance.new("ScreenGui")
+local Folder = Instance.new("Folder")
+local Line = Instance.new("Frame")
+
+ScreenGui.Name = "ESP"
+ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+Folder.Name = "Players"
+Folder.Parent = ScreenGui
+
+Line.BackgroundColor3 = Color3.new(1, 1, 1)
+Line.BorderSizePixel = 0
+Line.Size = UDim2.new(0, 3, 0, 20)
+
+local function CreateESP(player)
+    local TextBox = Instance.new("TextBox")
+    TextBox.Name = player.Name
+    TextBox.BackgroundTransparency = 1
+    TextBox.Position = UDim2.new(0, 0, 0, -20)
+    TextBox.Size = UDim2.new(0, 200, 0, 20)
+    TextBox.Font = Enum.Font.SourceSansBold
+    TextBox.FontSize = Enum.FontSize.Size14
+    TextBox.TextColor3 = Color3.new(1, 1, 1)
+    TextBox.TextStrokeColor3 = Color3.new(0, 0, 0)
+    TextBox.TextStrokeTransparency = 0
+    TextBox.TextXAlignment = Enum.TextXAlignment.Center
+    TextBox.Text = player.Name
+    TextBox.Parent = Folder
+
+    local LineClone = Line:Clone()
+    LineClone.Parent = TextBox
+
+    local function Update()
+        local Position, Visible = Camera:WorldToViewportPoint(player.Character.HumanoidRootPart.Position)
+        TextBox.Visible = Visible
+
+        if Visible then
+            TextBox.Position = UDim2.new(0, Position.X, 0, Position.Y)
+        end
+    end
+
+    game:GetService("RunService").RenderStepped:Connect(Update)
+end
+
+for _, player in ipairs(Players:GetPlayers()) do
+    if player ~= LocalPlayer then
+        CreateESP(player)
+    end
+end
+
+Players.PlayerAdded:Connect(function(player)
+    if player ~= LocalPlayer then
+        CreateESP(player)
+    end
+end)
+
+Players.PlayerRemoving:Connect(function(player)
+    local TextBox = Folder:FindFirstChild(player.Name)
+    if TextBox then
+        TextBox:Destroy()
+    end
+end)
